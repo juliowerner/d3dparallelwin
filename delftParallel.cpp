@@ -33,8 +33,33 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE hprevinstance, LPSTR szCmdLine
     string command;
 
     string MPIPATH = "c:\\Program Files (x86)\\Intel\\MPI-RT\\4.1.3.047\\em64t\\bin\\mpiexec";
-    string D3DPATH = "c:\\delft3d\\win32";
+    string D3DPATH = "c:\\delft3d\\win64";
     int numCPU = sysinfo.dwNumberOfProcessors;
+
+    ifstream file;
+    string line;
+    string varname;
+    string value;
+    int pos;
+
+    // Get Path from config.ini
+    file.open("config.ini");
+    if (file.is_open())
+    {
+      while (getline(file, line))
+      {
+        if (line.length()>0)
+        {
+          pos = line.find("=");
+          varname = line.substr(0, pos);
+          if (varname.compare("MPIPATH") == 0)
+            MPIPATH = line.substr(pos+1, line.length()-1);
+          if (varname.compare("D3DPATH") == 0)
+            D3DPATH = line.substr(pos+1, line.length()-1);
+        }
+      }
+    }
+    file.close();
 
     // Initial Instructions
     output = MessageBox(NULL, INITMSG, TITLE, MB_OKCANCEL);
@@ -109,16 +134,24 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE hprevinstance, LPSTR szCmdLine
         system(command.c_str());
     }
     // Run Delft3d
-    command = "\"\"";
+    command = "\"";
     command += MPIPATH;
-    command += "\"\"";
+    command += "\"";
     command += " -localonly ";
     command += numProc;
     command += " ";
     command += D3DPATH;
     command += FLOWPATH;
     command.append(" tmp.xml");
-    system(command.c_str());
-    system("pause");
+    // Create bat file in the workspace directory
+    ofstream batFile;
+    system("del tmp.bat");
+    batFile.open("tmp.bat");
+    batFile << command << endl;
+    batFile << "pause" << endl;
+    system("echo %cd%");
+    system("tmp.bat");
+    //system(command.c_str());
+    //system("pause");
     return 0;
 }

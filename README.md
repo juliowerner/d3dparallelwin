@@ -2,13 +2,11 @@
 Graphical Interface for Windows to run Delft3D modeling projects in Parallel
 
 ## Requirements
-1. Compiled Delft3D soruce code
-2. MPI runtime library for Intel
+- Compiled Delft3D source code
+- MPI runtime library for Intel
 
 ## Configuring
 
-to do
+Edit config.ini and correct path for mpirun and delft3d.
 
-## Running
 
-to do
