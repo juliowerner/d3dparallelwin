@@ -8,8 +8,9 @@
 
 using namespace std;
 
-#define FLOWPATH "\\flow2d3d\\bin\\d_hydro.exe"
-#define WAVEPATH "\\wave\\bin\\wave.exe"
+#define FLOWPATH "\\dflow2d3d\\scripts\\run_dflow2d3d_parallel.bat"
+#define WAVEPATH "\\dflow2d3d\\scripts\\run_dflow2d3d_parallel_dwaves.bat"
+#define SMPDPATH "\\share\\bin\\smpd.exe"
 #define TITLE "Delft3d Parallel Run"
 
 const char XMLHeader[] =
@@ -18,7 +19,7 @@ const char XMLHeader[] =
 "<control> <sequence> <start>myNameFlow</start> </sequence> </control>"
 "<flow2D3D name=\"myNameFlow\"> <library>flow2d3d</library>";
 const char XMLFooter[] = "</flow2D3D></deltaresHydro>";
-const char INITMSG[] = "Instructions:\nDelft3d folder should be at c:\\delft3d and Intel MPI Runtime 4.1.3.047 should be installed. Remember, some features as DD does not run in parallel. \nRun procedure:\n 1) Choose the mdf file\n 2) Choose the number of processors\n 3) If you are luck Delft3d will run in Parallel!\n\nP.S. Answer following questions correctly. There is no warranty.\n Developed by: juliowerner at ufpr.br";
+const char INITMSG[] = "Instructions:\nDelft3d folder should be atC:\\Program Files\\Deltares\\Delft3D 4.04.01\\x64 or in a config.ini file. Remember, some features as DD does not run in parallel. \nRun procedure:\n 1) Choose the mdf file\n 2) Choose the number of processors\n 3) If you are luck Delft3d will run in Parallel!\n\nP.S. Answer following questions correctly. There is no warranty.\n Developed by: juliowerner at ufpr.br";
 
 
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE hprevinstance, LPSTR szCmdLine, int nCmdShow)
@@ -32,8 +33,7 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE hprevinstance, LPSTR szCmdLine
     string mdffname;
     string command;
 
-    string MPIPATH = "c:\\Program Files (x86)\\Intel\\MPI-RT\\4.1.3.047\\em64t\\bin\\mpiexec";
-    string D3DPATH = "c:\\delft3d\\win64";
+    string D3DPATH = "C:\\Program Files\\Deltares\\Delft3D 4.04.01\\x64";
     int numCPU = sysinfo.dwNumberOfProcessors;
 
     ifstream file;
@@ -52,8 +52,6 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE hprevinstance, LPSTR szCmdLine
         {
           pos = line.find("=");
           varname = line.substr(0, pos);
-          if (varname.compare("MPIPATH") == 0)
-            MPIPATH = line.substr(pos+1, line.length()-1);
           if (varname.compare("D3DPATH") == 0)
             D3DPATH = line.substr(pos+1, line.length()-1);
         }
@@ -98,8 +96,8 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE hprevinstance, LPSTR szCmdLine
 
     // Create tmp xml file in the workspace directory
     ofstream xmlFile;
-    system("del tmp.xml");
-    xmlFile.open("tmp.xml");
+    system("del config_d_hydro.xml");
+    xmlFile.open("config_d_hydro.xml");
     xmlFile << XMLHeader << endl;
     if(ext == ".mdf")
         xmlFile << "<mdfFile>" << fname << "</mdfFile>" << endl;
@@ -108,7 +106,7 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE hprevinstance, LPSTR szCmdLine
     xmlFile << XMLFooter << endl;
 
     // Ask for Wave Model
-    output = MessageBox(NULL, "Would you like to run WAVE package?", TITLE,  MB_YESNO);
+    output = MessageBox(NULL, "Would you like to run WAVE package", TITLE,  MB_YESNO);
     if (output == IDYES)
     {
         output = MessageBox(NULL, "Choose the MDW file in following window.", TITLE, MB_OK);
@@ -129,20 +127,30 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE hprevinstance, LPSTR szCmdLine
         string mdwfname = ofnmdw.lpstrFile;
         // Start wave in new window
         command = "start \"Wave Simulation\" \"";
-        command += D3DPATH + WAVEPATH + "\"";
-        command += " " + mdwfname + " 1";
-        system(command.c_str());
+        command += D3DPATH + WAVEPATH + "\" ";
+        command += "-w " + mdwfname;
+		ofstream batFile;
+		system("del tmp_wave.bat");
+		batFile.open("tmp_wave.bat");
+		batFile << command << endl;
+		batFile << "pause" << endl;
+		system("echo %cd%");
+		system("tmp_wave.bat");
+		return 0;
     }
     // Run Delft3d
-    command = "\"";
-    command += MPIPATH;
+	command = "\"";
+	command += D3DPATH;
+	command += SMPDPATH;
+	command += "\" ";
+	command += "-install";
+	command += "\n";
     command += "\"";
-    command += " -localonly ";
-    command += numProc;
-    command += " ";
     command += D3DPATH;
     command += FLOWPATH;
-    command.append(" tmp.xml");
+	command += "\"";
+	command += " ";
+	command += numProc;
     // Create bat file in the workspace directory
     ofstream batFile;
     system("del tmp.bat");
