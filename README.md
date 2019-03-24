@@ -1,5 +1,6 @@
 # d3drunparallelwin
-Graphical Interface for Windows to run Delft3D modeling projects in Parallel
+Graphical Interface for Windows to run Delft3D modeling projects in Parallel.
+New release works only for delft3d 4.04 and later.
 
 ## Requirements
 - Compiled Delft3D source code
